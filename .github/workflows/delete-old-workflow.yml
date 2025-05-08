@@ -1,1 +1,80 @@
+# Name of the workflow
+name: Cleanup Old Workflows
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on a schedule (every Sunday at 00:00 UTC)
+  schedule:
+    - cron: '0 0 * * 0'
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This job is named "cleanup"
+  cleanup:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Permissions needed for the job
+    permissions:
+      actions: write # Required to delete workflow runs
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Step 1: Checkout the repository
+      # This action checks-out your repository under $GITHUB_WORKSPACE, so your job can access it.
+      # Using a more recent version of the checkout action.
+      - name: Checkout repository
+        uses: actions/checkout@v4 # Updated to v4
+
+      # Step 2: Delete old workflow runs
+      # Uses a dedicated action for deleting workflow runs.
+      # This action is more efficient and handles pagination and other edge cases.
+      - name: Delete old workflow runs
+        uses: actions/delete-workflow-runs@v1 # Using the dedicated action
+        with:
+          # The GitHub token to use for authentication.
+          # ${{ secrets.GITHUB_TOKEN }} is automatically created and provided by GitHub Actions.
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+          # The repository to delete workflow runs from.
+          # ${{ github.repository }} refers to the current repository (owner/repo).
+          repository: ${{ github.repository }}
+
+          # Delete workflow runs older than this number of days.
+          # '14' means runs older than 2 weeks.
+          retain_days: 14
+
+          # Optional: Specify which workflow file names to target.
+          # If not specified, it targets all workflows in the repository.
+          # Example:
+          # workflows: |
+          #   ci.yml
+          #   build.yml
+
+          # Optional: Specify which branches to target.
+          # If not specified, it targets all branches.
+          # Example:
+          # branches: |
+          #   main
+          #   develop
+
+          # Optional: Specify which statuses to target.
+          # Default is all statuses. You can specify 'completed', 'success', 'failure', 'cancelled', 'skipped', etc.
+          # The original script targeted 'completed' or 'failed'.
+          # This action by default considers all concluded runs (completed, failed, cancelled, skipped).
+          # If you strictly want only 'completed' and 'failed', you might need to check if this action
+          # supports that specific filtering or if its default behavior is acceptable.
+          # For most cleanup purposes, deleting all concluded runs older than N days is fine.
+
+          # Optional: Keep at least this many runs of each workflow, regardless of age.
+          # keep_minimum_runs: 10
+
+          # Optional: Delete workflow runs created by specific actors (GitHub usernames).
+          # Example:
+          # delete_actor: "github-actions[bot]"
+
+          # Optional: Dry run. Set to true to see which runs would be deleted without actually deleting them.
+          # dry_run: true
 
